@@ -9,17 +9,17 @@ import 'package:ichat/helper/firebase_helper.dart';
 import 'package:ichat/models/user_model.dart';
 import 'package:ichat/ui/home_screen.dart';
 import 'package:ichat/ui/login_screen.dart';
-import 'package:ichat/ui/video/video_record_screen.dart';
-import 'package:ichat/ui/video/video_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-
+import 'firebase_options.dart';
 // bool isWhite = false;
 var uuid = Uuid();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   final cameras = await availableCameras();
   final firstCamera = cameras.first;
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -56,24 +56,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return
-        // MultiProvider(
-        //   providers: [
-        //     ChangeNotifierProvider<AuthProvider>(
-        //       create: (_) => AuthProvider(
-        //         firebaseAuth: FirebaseAuth.instance,
-        //         googleSignIn: GoogleSignIn(),
-        //         firebaseFirestore: firebaseFirestore,
-        //         prefs: prefs,
-        //       ),
-        //     ),
-        //     Provider<SettingProvider>(
-        //       create: (_) => SettingProvider(
-        //           prefs: prefs,
-        //           firebaseFirestore: firebaseFirestore,
-        //           firebaseStorage: firebaseStorage),
-        //     )
-        //   ],
-        //   child:
+
         MaterialApp(
       debugShowCheckedModeBanner: false,
       title: AppConstants.appTitle,

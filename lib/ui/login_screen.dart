@@ -40,9 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      // close loading dialoge
       Navigator.pop(context);
-      // open alert dialoge
       UiHelper.showAlertDialog(
           context, "An error occured!", e.message.toString());
       print(e.toString());
@@ -119,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 TextField(
                   controller: passwordCtr,
-                  keyboardType: TextInputType.number,
+                  // keyboardType: TextInputType.number,
                   decoration: InputDecoration(hintText: "password"),
                 ),
                 SizedBox(

@@ -1,44 +1,26 @@
 {
   "project_info": {
-    "project_number": "845187387375",
-    "project_id": "chat-app-b0084",
-    "storage_bucket": "chat-app-b0084.appspot.com"
+    "project_number": "921022996019",
+    "project_id": "chatapp-5f7b2",
+    "storage_bucket": "chatapp-5f7b2.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:845187387375:android:95fd1eaba76ac6dc75f01a",
+        "mobilesdk_app_id": "1:921022996019:android:ac53f22eb4ab5df5e04d46",
         "android_client_info": {
           "package_name": "com.example.ichat"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "845187387375-ggs8j3u6pokkjrb99utddvf32lqqf6qv.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.ichat",
-            "certificate_hash": "fc08539e004b849c94f984f5622fb5671e3f75b8"
-          }
-        },
-        {
-          "client_id": "845187387375-ig2jrfbarof3eu4rms90kebqvc3082cn.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDoP0rVTkF55oeoQ8DXEG94Q3bHPRRifa0"
+          "current_key": "AIzaSyCh_028GOrOvNYMZr4wV7tqmfEXgqBpA34"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "845187387375-ig2jrfbarof3eu4rms90kebqvc3082cn.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

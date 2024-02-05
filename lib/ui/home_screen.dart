@@ -9,7 +9,6 @@ import 'package:ichat/ui/chat_room_screen.dart';
 import 'package:ichat/ui/login_screen.dart';
 import 'package:ichat/ui/realtime_databse/realtime_data_screen.dart';
 import 'package:ichat/ui/search_screen.dart';
-import 'package:ichat/ui/video/video_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel userModel;
@@ -21,119 +20,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // final GoogleSignIn googleSignIn = GoogleSignIn();
-  // final ScrollController listScrollController = ScrollController();
 
-  // // int _limit = 20;
-  // // int _limitIncrement = 20;
-  // bool isLoading = false;
-
-  // late String currentUserId;
-  // late AuthProvider authProvider;
-  // // late HomeProvider homeProvider;
-  // List<PopupChoicesModel> choices = <PopupChoicesModel>[
-  //   PopupChoicesModel(title: 'Settings', icon: Icons.settings),
-  //   PopupChoicesModel(title: 'Sign out', icon: Icons.exit_to_app)
-  // ];
-
-  // void handleSignOut() async {
-  //   authProvider.handleSignOut();
-  //   Navigator.pushReplacement(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => LoginScreen(),
-  //     ),
-  //   );
-  // }
-
-  // void scrollListener() {
-  //   if (listScrollController.offset >=
-  //           listScrollController.position.maxScrollExtent &&
-  //       listScrollController.position.outOfRange) {
-  //     setState(() {
-  //       _limit += _limitIncrement;
-  //     });
-  //   }
-  // }
-
-  // void onItemMenuPress(PopupChoicesModel choicesModel) {
-  //   if (choicesModel.title == "Sign out") {
-  //     handleSignOut();
-  //   } else {
-  //     Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => SettingScreen(),
-  //       ),
-  //     );
-  //   }
-  // }
-
-  // Widget buildPopupMenu() {
-  //   return PopupMenuButton<PopupChoicesModel>(
-  //       icon: Icon(
-  //         Icons.more_vert,
-  //         color: Colors.grey,
-  //       ),
-  //       onSelected: onItemMenuPress,
-  //       itemBuilder: (BuildContext context) {
-  //         return choices.map((PopupChoicesModel choice) {
-  //           return PopupMenuItem(
-  //             value: choice,
-  //             child: Row(
-  //               children: <Widget>[
-  //                 Icon(
-  //                   choice.icon,
-  //                   color: AppColors.primaryColor,
-  //                 ),
-  //                 Container(
-  //                   width: 10,
-  //                 ),
-  //                 Text(
-  //                   choice.title,
-  //                   style: TextStyle(color: AppColors.primaryColor),
-  //                 )
-  //               ],
-  //             ),
-  //           );
-  //         }).toList();
-  //       });
-  // }
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   authProvider = context.read<AuthProvider>();
-  //   // homeProvider = context.read<HomeProvider>();
-  //   if (authProvider.getUserFirebaseId()?.isNotEmpty == true) {
-  //     currentUserId = authProvider.getUserFirebaseId()!;
-  //   } else {
-  //     Navigator.of(context).pushAndRemoveUntil(
-  //         MaterialPageRoute(builder: (context) => LoginScreen()),
-  //         (Route<dynamic> route) => false);
-  //   }
-  //   listScrollController.addListener(scrollListener);
-  // }
-  //  appBar: AppBar(
-  //         backgroundColor: isWhite ? Colors.white : Colors.black,
-  //         leading: IconButton(
-  //           onPressed: () {},
-  //           icon: Switch(
-  //             activeColor: Colors.white,
-  //             activeTrackColor: Colors.black,
-  //             inactiveTrackColor: Colors.white,
-  //             inactiveThumbColor: Colors.black54,
-  //             value: isWhite,
-  //             onChanged: (value) {
-  //               setState(() {
-  //                 isWhite = value;
-  //                 print(isWhite);
-  //               });
-  //             },
-  //           ),
-  //         ),
-  //         actions: [buildPopupMenu()],
-  //       ),
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,17 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(
             width: 10,
           ),
-          IconButton(
-            onPressed: () async {
-              // Navigator.push(context, MaterialPageRoute(builder: (context) {
-              //   return VideoScreen();
-              // }));
-            },
-            icon: Icon(Icons.video_collection),
-          ),
-          SizedBox(
-            width: 10,
-          ),
+
           IconButton(
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();

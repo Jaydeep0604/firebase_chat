@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ichat/allConstants/color_constants.dart';
 import 'package:ichat/main.dart';
 import 'package:ichat/models/chat_room_model.dart';
@@ -11,8 +10,9 @@ import 'package:ichat/ui/chat_room_screen.dart';
 class SearchScreen extends StatefulWidget {
   final UserModel userModel;
   final User firebaseUser;
-  const SearchScreen(
-      {super.key, required this.userModel, required this.firebaseUser});
+
+  const SearchScreen({Key? key, required this.userModel, required this.firebaseUser})
+      : super(key: key);
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -32,10 +32,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (snapshot.docs.length > 0) {
       //fetch existing chat
-      print("chatroom alreday created");
+      print("chatroom already created");
       var docData = snapshot.docs[0].data();
-      ChatRoomModel existingChatRoom =
-          ChatRoomModel.fromMap(docData as Map<String, dynamic>);
+      ChatRoomModel existingChatRoom = ChatRoomModel.fromMap(docData as Map<String, dynamic>);
       chatRoom = existingChatRoom;
     } else {
       //create a new one
@@ -65,7 +64,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
@@ -83,6 +82,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     Expanded(
                       child: TextField(
                         controller: searchCtr,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                         decoration: InputDecoration(hintText: "Search User"),
                       ),
                     ),
@@ -106,71 +108,60 @@ class _SearchScreenState extends State<SearchScreen> {
                           color: Colors.white,
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
                 SizedBox(
                   height: 20,
                 ),
-                Expanded(
+                searchCtr.text.isEmpty
+                    ? Expanded(
                   child: StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection("users")
-                        .where("fullname", isNotEqualTo: widget.userModel.fullname)
-                        .where("fullname", isEqualTo: searchCtr.text)
-                        .snapshots(),
+                    stream: FirebaseFirestore.instance.collection("users").snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.active) {
                         if (snapshot.hasData) {
-                          QuerySnapshot datasnapshot =
-                              snapshot.data as QuerySnapshot;
-                    
-                          if (datasnapshot.docs.length > 0) {
-                            Map<String, dynamic> userMap =
-                                datasnapshot.docs[0].data() as Map<String, dynamic>;
-                            UserModel searchedUser = UserModel.fromMap(userMap);
-                            return Column(
-                              children: [
-                                ListTile(
-                                  title: Text(searchedUser.fullname.toString()),
-                                  subtitle: Text(searchedUser.email.toString()),
-                                  leading: CircleAvatar(
-                                    backgroundImage:
-                                        NetworkImage(searchedUser.profilepic!),
-                                    backgroundColor:
-                                        AppColors.greyColor.withOpacity(0.5),
-                                  ),
-                                  onTap: () async {
-                                    ChatRoomModel? chatRoomModel =
-                                        await getChatRoomModel(searchedUser);
-                    
-                                    if (chatRoomModel != null) {
-                                      Navigator.pop(context);
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) {
-                                            return ChatRoomScreen(
-                                              targetUser: searchedUser,
-                                              userUser: widget.userModel,
-                                              firebaseUser: widget.firebaseUser,
-                                              chatRoom: chatRoomModel,
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    }
-                                  },
+                          QuerySnapshot datasnapshot = snapshot.data as QuerySnapshot;
+
+                          return Column(
+                            children: datasnapshot.docs.map((DocumentSnapshot document) {
+                              Map<String, dynamic> userMap = document.data() as Map<String, dynamic>;
+                              UserModel searchedUser = UserModel.fromMap(userMap);
+
+                              return ListTile(
+                                title: Text(searchedUser.fullname.toString()),
+                                subtitle: Text(searchedUser.email.toString()),
+                                leading: CircleAvatar(
+                                  backgroundImage: NetworkImage(searchedUser.profilepic!),
+                                  backgroundColor: AppColors.greyColor.withOpacity(0.5),
                                 ),
-                              ],
-                            );
-                          } else {
-                            return Center(child: Text("No result found!"));
-                          }
+                                onTap: () async {
+                                  ChatRoomModel? chatRoomModel = await getChatRoomModel(searchedUser);
+
+                                  if (chatRoomModel != null) {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return ChatRoomScreen(
+                                            targetUser: searchedUser,
+                                            userUser: widget.userModel,
+                                            firebaseUser: widget.firebaseUser,
+                                            chatRoom: chatRoomModel,
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            }).toList(),
+                          );
                         } else if (snapshot.hasError) {
-                          return Center(child: Text("An error occured!"));
+                          return Center(child: Text("An error occurred!"));
                         } else {
-                          return Center(child: Text("No result found!"));
+                          return Center(child: CircularProgressIndicator());
                         }
                       } else {
                         return Center(child: CircularProgressIndicator());
@@ -178,6 +169,69 @@ class _SearchScreenState extends State<SearchScreen> {
                     },
                   ),
                 )
+                    : Expanded(
+                  child: StreamBuilder(
+                    stream: FirebaseFirestore.instance
+                        .collection("users")
+                        .where("fullname", isNotEqualTo: widget.userModel.fullname)
+                        .where("fullname", isGreaterThanOrEqualTo: searchCtr.text)
+                        .where("fullname", isLessThan: searchCtr.text + 'z')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.active) {
+                        if (snapshot.hasData) {
+                          QuerySnapshot datasnapshot = snapshot.data as QuerySnapshot;
+
+                          if (datasnapshot.docs.isEmpty) {
+                            return Center(child: Text("No Data Found"));
+                          }
+
+                          return Column(
+                            children: datasnapshot.docs.map((DocumentSnapshot document) {
+                              Map<String, dynamic> userMap = document.data() as Map<String, dynamic>;
+                              UserModel searchedUser = UserModel.fromMap(userMap);
+
+                              return ListTile(
+                                title: Text(searchedUser.fullname.toString()),
+                                subtitle: Text(searchedUser.email.toString()),
+                                leading: CircleAvatar(
+                                  backgroundImage: NetworkImage(searchedUser.profilepic!),
+                                  backgroundColor: AppColors.greyColor.withOpacity(0.5),
+                                ),
+                                onTap: () async {
+                                  ChatRoomModel? chatRoomModel = await getChatRoomModel(searchedUser);
+
+                                  if (chatRoomModel != null) {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return ChatRoomScreen(
+                                            targetUser: searchedUser,
+                                            userUser: widget.userModel,
+                                            firebaseUser: widget.firebaseUser,
+                                            chatRoom: chatRoomModel,
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            }).toList(),
+                          );
+                        } else if (snapshot.hasError) {
+                          return Center(child: Text("An error occurred!"));
+                        } else {
+                          return Center(child: CircularProgressIndicator());
+                        }
+                      } else {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                    },
+                  ),
+                ),
               ],
             ),
           ),
