@@ -14,11 +14,11 @@ class ChatRoomScreen extends StatefulWidget {
   final UserModel userUser;
   final User firebaseUser;
   const ChatRoomScreen({
-  super.key,
-  required this.targetUser,
-  required this.chatRoom,
-  required this.userUser,
-  required this.firebaseUser,
+    super.key,
+    required this.targetUser,
+    required this.chatRoom,
+    required this.userUser,
+    required this.firebaseUser,
   });
 
   @override
@@ -28,12 +28,10 @@ class ChatRoomScreen extends StatefulWidget {
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   TextEditingController messageCtr = TextEditingController();
 
-  // Add a helper method to format the date
   String formatDate(DateTime dateTime) {
     return DateFormat.yMMMMd().format(dateTime);
   }
 
-  // Helper method to check if two dates are on the same day
   bool isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
         date1.month == date2.month &&
@@ -59,6 +57,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           .set(newMessage.toMap());
 
       widget.chatRoom.lastMessage = msg;
+      print(widget.chatRoom.lastMessage);
+      print(widget.chatRoom.chatroomid);
+      print(widget.chatRoom.participants.toString());
+      print(widget.chatRoom.users.toString());
+      print(widget.chatRoom.title);
       FirebaseFirestore.instance
           .collection("chatrooms")
           .doc(widget.chatRoom.chatroomid)
@@ -70,6 +73,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   // Helper method to build a message row
   Widget buildMessageRow(MessageModel currentMessage) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: (currentMessage.sender == widget.userUser.uid)
           ? MainAxisAlignment.end
           : MainAxisAlignment.start,
@@ -87,19 +91,37 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (currentMessage.sender != widget.userUser.uid)
+                    Text(
+                      widget.targetUser.fullname.toString(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                    ),
+                  SizedBox(width: 2), // Add spacing between name and time
+                  Text(
+                    DateFormat.Hm().format(currentMessage.createdon!.toDate()),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 5), // Add spacing between name/time and message
               Text(
                 currentMessage.text.toString(),
                 style: TextStyle(
                   color: Colors.white,
                 ),
               ),
-              Text(
-                DateFormat.Hm().format(currentMessage.createdon!.toDate()),
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              )
             ],
           ),
         ),
@@ -117,16 +139,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         appBar: AppBar(
           title: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.grey,
-                backgroundImage:
-                NetworkImage(widget.targetUser.profilepic.toString()),
-              ),
+              widget.chatRoom.title == null || widget.chatRoom.title == ""
+                  ? CircleAvatar(
+                      backgroundColor: Colors.grey,
+                      backgroundImage:
+                          NetworkImage(widget.targetUser.profilepic.toString()),
+                    )
+                  : Icon(Icons.group),
               SizedBox(
                 width: 10,
               ),
               Text(
-                widget.targetUser.fullname.toString(),
+                widget.chatRoom.title == null || widget.chatRoom.title == ""
+                    ? widget.targetUser.fullname.toString()
+                    : widget.chatRoom.title.toString(),
               )
             ],
           ),
@@ -151,29 +177,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             ConnectionState.active) {
                           if (snapshot.hasData) {
                             QuerySnapshot datasnapshot =
-                            snapshot.data as QuerySnapshot;
-
-                            // Initialize variables to track current date
+                                snapshot.data as QuerySnapshot;
                             DateTime currentDate = DateTime.now();
-
                             return ListView.builder(
                               reverse: true,
                               itemCount: datasnapshot.docs.length,
                               itemBuilder: (context, index) {
                                 MessageModel currentMessage =
-                                MessageModel.fromMap(
-                                    datasnapshot.docs[index].data()
-                                    as Map<String, dynamic>);
+                                    MessageModel.fromMap(
+                                        datasnapshot.docs[index].data()
+                                            as Map<String, dynamic>);
 
                                 // Check if the date has changed
                                 if (currentMessage.createdon != null) {
                                   DateTime messageDate =
-                                  currentMessage.createdon!.toDate();
-
+                                      currentMessage.createdon!.toDate();
                                   if (!isSameDay(messageDate, currentDate)) {
                                     currentDate = messageDate;
-
-                                    // Add a date header for the new date
                                     return Column(
                                       children: [
                                         Container(
@@ -194,7 +214,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                     );
                                   }
                                 }
-
                                 // If the date is the same, continue with the regular message row
                                 return buildMessageRow(currentMessage);
                               },

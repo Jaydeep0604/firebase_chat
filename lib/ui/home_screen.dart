@@ -6,6 +6,7 @@ import 'package:ichat/helper/firebase_helper.dart';
 import 'package:ichat/models/chat_room_model.dart';
 import 'package:ichat/models/user_model.dart';
 import 'package:ichat/ui/chat_room_screen.dart';
+import 'package:ichat/ui/group_chat_screen.dart';
 import 'package:ichat/ui/login_screen.dart';
 import 'package:ichat/ui/realtime_databse/realtime_data_screen.dart';
 import 'package:ichat/ui/search_screen.dart';
@@ -20,7 +21,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(
             width: 10,
           ),
-
           IconButton(
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
@@ -53,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.exit_to_app))
         ],
       ),
-
       body: SafeArea(
         child: Container(
           child: Column(
@@ -150,6 +148,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         userData.data as UserModel;
                                     return ListTile(
                                       onTap: () {
+                                        print(
+                                            "+++++${chatRoomModel.title}------");
                                         Navigator.push(context,
                                             MaterialPageRoute(
                                                 builder: (context) {
@@ -161,12 +161,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                           );
                                         }));
                                       },
-                                      leading: CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                            targetUser.profilepic.toString()),
-                                      ),
-                                      title:
-                                          Text(targetUser.fullname.toString()),
+                                      leading: chatRoomModel.title == "" ||
+                                              chatRoomModel.title == null
+                                          ? CircleAvatar(
+                                              backgroundImage: NetworkImage(
+                                                  targetUser.profilepic
+                                                      .toString()),
+                                            )
+                                          : Icon(Icons.group),
+                                      title: Text(chatRoomModel.title == "" ||
+                                              chatRoomModel.title == null
+                                          ? targetUser.fullname.toString()
+                                          : chatRoomModel.title.toString()),
                                       subtitle: chatRoomModel.lastMessage
                                                   .toString() !=
                                               ""
@@ -205,16 +211,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   elevation: 0,
-      //   onPressed: () {
-      //     Navigator.push(context, MaterialPageRoute(builder: (context) {
-      //       return SearchScreen(
-      //           userModel: widget.userModel, firebaseUser: widget.firebaseUser);
-      //     }));
-      //   },
-      //   child: Icon(Icons.search),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.group),
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => GroupScreen(
+                userModel: widget.userModel, firebaseUser: widget.firebaseUser),
+          ),
+        ),
+      ),
     );
   }
 }
