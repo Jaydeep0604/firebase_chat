@@ -20,6 +20,7 @@ class GroupScreen extends StatefulWidget {
 
 class _GroupScreenState extends State<GroupScreen> {
   TextEditingController searchCtr = TextEditingController();
+  TextEditingController groupNameCtr = TextEditingController();
   List<UserModel> selectableUsers = [];
   Set<UserModel> selectedUsers = {};
 
@@ -52,7 +53,7 @@ class _GroupScreenState extends State<GroupScreen> {
 
       ChatRoomModel newChatRoom = ChatRoomModel(
         chatroomid: uuid.v1(),
-        title: "Test group 2",
+        title: groupNameCtr.text,
         lastMessage: "",
         participants: participants,
         users: participantIds,
@@ -159,7 +160,9 @@ class _GroupScreenState extends State<GroupScreen> {
           actions: [
             IconButton(
               onPressed: () {
-                getGroupGroupChatRoomModel(selectableUsers.toList()).then((value) => Navigator.pop(context));
+                getGroupGroupChatRoomModel(selectedUsers.toList()).then(
+                  (value) => Navigator.pop(context),
+                );
               },
               icon: Icon(Icons.check),
             ),
@@ -200,6 +203,19 @@ class _GroupScreenState extends State<GroupScreen> {
                           Icons.search,
                           color: Colors.white,
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: groupNameCtr,
+                        decoration: InputDecoration(hintText: "Group name"),
                       ),
                     ),
                   ],
