@@ -1,4 +1,3 @@
-import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -20,8 +19,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  final cameras = await availableCameras();
-  final firstCamera = cameras.first;
   SharedPreferences prefs = await SharedPreferences.getInstance();
   User? currentUser = FirebaseAuth.instance.currentUser;
   if (currentUser != null) {
@@ -31,7 +28,6 @@ void main() async {
       runApp(MyAppLoggedIn(
         userModel: userModel,
         firebaseUser: currentUser,
-        camera: firstCamera,
       ));
     } else {
       runApp(MyApp(
@@ -74,12 +70,11 @@ class MyApp extends StatelessWidget {
 class MyAppLoggedIn extends StatelessWidget {
   final UserModel? userModel;
   final User? firebaseUser;
-  final CameraDescription camera;
   MyAppLoggedIn(
       {super.key,
       required this.userModel,
       required this.firebaseUser,
-      required this.camera});
+      });
 
   @override
   Widget build(BuildContext context) {

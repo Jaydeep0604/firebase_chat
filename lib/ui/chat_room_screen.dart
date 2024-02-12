@@ -13,13 +13,14 @@ class ChatRoomScreen extends StatefulWidget {
   final ChatRoomModel chatRoom;
   final UserModel userUser;
   final User firebaseUser;
+
   const ChatRoomScreen({
-    super.key,
+    Key? key,
     required this.targetUser,
     required this.chatRoom,
     required this.userUser,
     required this.firebaseUser,
-  });
+  }) : super(key: key);
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -27,6 +28,30 @@ class ChatRoomScreen extends StatefulWidget {
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   TextEditingController messageCtr = TextEditingController();
+  List<MessageModel> _messages = [];
+  bool _isSending = false; // Flag to track if a message is being sent
+
+  @override
+  void initState() {
+    super.initState();
+    loadMessages();
+  }
+
+  void loadMessages() {
+    FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(widget.chatRoom.chatroomid)
+        .collection("messages")
+        .orderBy("createdon", descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      setState(() {
+        _messages = snapshot.docs
+            .map((doc) => MessageModel.fromMap(doc.data() as Map<String, dynamic>))
+            .toList();
+      });
+    });
+  }
 
   String formatDate(DateTime dateTime) {
     return DateFormat.yMMMMd().format(dateTime);
@@ -38,95 +63,132 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         date1.day == date2.day;
   }
 
-  void sendMessage() async {
-    String msg = messageCtr.text.trim();
-    messageCtr.clear();
-    if (msg.isNotEmpty) {
-      MessageModel newMessage = MessageModel(
-        messageId: uuid.v1(),
-        sender: widget.userUser.uid,
-        createdon: Timestamp.now(),
-        text: msg,
-        seen: false,
-      );
-      FirebaseFirestore.instance
+  void sendMessage(String chatRoomId, String currentUserId, String targetUserId,
+      String msg, BuildContext context) async {
+    if (_isSending) return; // Prevent multiple sends
+
+    setState(() {
+      _isSending = true;
+    });
+
+    MessageModel newMessage = MessageModel(
+      messageId: uuid.v1(),
+      sender: currentUserId,
+      createdon: Timestamp.now(),
+      text: msg,
+      seen: false,
+    );
+
+    try {
+      await FirebaseFirestore.instance
           .collection("chatrooms")
-          .doc(widget.chatRoom.chatroomid)
+          .doc(chatRoomId)
           .collection("messages")
           .doc(newMessage.messageId)
           .set(newMessage.toMap());
 
-      widget.chatRoom.lastMessage = msg;
-      print(widget.chatRoom.lastMessage);
-      print(widget.chatRoom.chatroomid);
-      print(widget.chatRoom.participants.toString());
-      print(widget.chatRoom.users.toString());
-      print(widget.chatRoom.title);
-      FirebaseFirestore.instance
-          .collection("chatrooms")
-          .doc(widget.chatRoom.chatroomid)
-          .set(widget.chatRoom.toMap());
-      print("message sent");
+      setState(() {
+        _messages.insert(0, newMessage);
+      });
+
+      messageCtr.clear(); // Clear the message input field
+    } catch (e) {
+      print("Error sending message: $e");
+    } finally {
+      setState(() {
+        _isSending = false;
+      });
     }
   }
 
+
   // Helper method to build a message row
   Widget buildMessageRow(MessageModel currentMessage) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: (currentMessage.sender == widget.userUser.uid)
-          ? MainAxisAlignment.end
-          : MainAxisAlignment.start,
-      children: [
-        Container(
-          margin: EdgeInsets.symmetric(vertical: 3),
-          padding: EdgeInsets.symmetric(
-            vertical: 10,
-            horizontal: 10,
-          ),
-          decoration: BoxDecoration(
-            color: currentMessage.sender == widget.userUser.uid
-                ? Colors.black87
-                : Colors.blue,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (currentMessage.sender != widget.userUser.uid)
-                    Text(
-                      widget.targetUser.fullname.toString(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                    ),
-                  SizedBox(width: 2), // Add spacing between name and time
-                  Text(
-                    DateFormat.Hm().format(currentMessage.createdon!.toDate()),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                    ),
+    return FutureBuilder<UserModel?>(
+      future: getUserDetails(currentMessage.sender.toString()),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasData) {
+            UserModel? sender = snapshot.data;
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: (currentMessage.sender == widget.userUser.uid)
+                  ? MainAxisAlignment.end
+                  : MainAxisAlignment.start,
+              children: [
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 3),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 10,
                   ),
-                ],
-              ),
-              SizedBox(height: 5), // Add spacing between name/time and message
-              Text(
-                currentMessage.text.toString(),
-                style: TextStyle(
-                  color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: currentMessage.sender == widget.userUser.uid
+                        ? Colors.black87
+                        : Colors.blue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (currentMessage.sender != widget.userUser.uid)
+                            Text(
+                              sender?.fullname ?? '', // Use sender's name
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
+                            ),
+                          SizedBox(
+                              width: 2), // Add spacing between name and time
+                          Text(
+                            DateFormat.Hm()
+                                .format(currentMessage.createdon!.toDate()),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                          height:
+                              5), // Add spacing between name/time and message
+                      Text(
+                        currentMessage.text.toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ],
+              ],
+            );
+          } else if (snapshot.hasError) {
+            // Handle error if user details fetching fails
+            return Text('Error fetching user details');
+          }
+        }
+        // Return an empty container while loading
+        return Container();
+      },
     );
+  }
+
+  Future<UserModel?> getUserDetails(String userId) async {
+    DocumentSnapshot userSnapshot =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+
+    if (userSnapshot.exists) {
+      return UserModel.fromMap(userSnapshot.data() as Map<String, dynamic>);
+    } else {
+      return null;
+    }
   }
 
   @override
@@ -165,74 +227,54 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   child: Container(
                     color: Colors.white,
                     padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: StreamBuilder(
-                      stream: FirebaseFirestore.instance
-                          .collection("chatrooms")
-                          .doc(widget.chatRoom.chatroomid)
-                          .collection("messages")
-                          .orderBy("createdon", descending: true)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.active) {
-                          if (snapshot.hasData) {
-                            QuerySnapshot datasnapshot =
-                                snapshot.data as QuerySnapshot;
-                            DateTime currentDate = DateTime.now();
-                            return ListView.builder(
-                              reverse: true,
-                              itemCount: datasnapshot.docs.length,
-                              itemBuilder: (context, index) {
-                                MessageModel currentMessage =
-                                    MessageModel.fromMap(
-                                        datasnapshot.docs[index].data()
-                                            as Map<String, dynamic>);
+                    child: ListView.builder(
+                      reverse: true,
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        MessageModel currentMessage = _messages[index];
 
-                                // Check if the date has changed
-                                if (currentMessage.createdon != null) {
-                                  DateTime messageDate =
-                                      currentMessage.createdon!.toDate();
-                                  if (!isSameDay(messageDate, currentDate)) {
-                                    currentDate = messageDate;
-                                    return Column(
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 10,
-                                            horizontal: 10,
-                                          ),
-                                          color: Colors.grey.withOpacity(0.5),
-                                          child: Text(
-                                            formatDate(currentDate),
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        buildMessageRow(currentMessage),
-                                      ],
-                                    );
-                                  }
-                                }
-                                // If the date is the same, continue with the regular message row
-                                return buildMessageRow(currentMessage);
-                              },
+                        if (currentMessage.createdon != null) {
+                          DateTime messageDate =
+                              currentMessage.createdon!.toDate();
+                          bool isLastMessage =
+                              index == _messages.length - 1;
+                          bool isDifferentDay =
+                              !isSameDay(messageDate, DateTime.now()) &&
+                                  !isLastMessage;
+                          bool isDifferentNextDay = !isSameDay(
+                                  messageDate,
+                                  DateTime.now()
+                                      .add(Duration(days: 1))) &&
+                              !isLastMessage;
+
+                          if (isDifferentDay) {
+                            return Column(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Text(
+                                  formatDate(messageDate),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade700),
+                                ),
+                                buildMessageRow(currentMessage),
+                              ],
                             );
-                          } else if (snapshot.hasError) {
-                            return Center(
-                              child: Text(
-                                  "An error occurred! Please check your internet connection."),
-                            );
-                          } else {
-                            return Center(
-                              child: Text("Say hi to your new friend"),
+                          } else if (isDifferentNextDay) {
+                            return Column(
+                              children: [
+                                Text(
+                                  "Today",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                buildMessageRow(currentMessage),
+                              ],
                             );
                           }
-                        } else {
-                          return Center(
-                            child: CircularProgressIndicator(),
-                          );
                         }
+                        return buildMessageRow(currentMessage);
                       },
                     ),
                   ),
@@ -266,7 +308,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             borderRadius: BorderRadius.circular(50)),
                         child: IconButton(
                           onPressed: () {
-                            sendMessage();
+                            sendMessage(
+                              widget.chatRoom.chatroomid!,
+                              widget.userUser.uid!,
+                              widget.targetUser.uid!,
+                              messageCtr.text.trim(),
+                              context,
+                            );
                           },
                           icon: Icon(
                             Icons.send,
